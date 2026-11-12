@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0F2F3A">
+<meta name="color-scheme" content="light dark">
+<title>In tem QR</title>
+<link rel="icon" type="image/png" href="assets/icon-192.png">
+<link rel="stylesheet" href="assets/app.css">
+<script src="config.js"></script>
+<script src="assets/common.js"></script>
+<script src="lib/qrcode.js"></script>
+<style>
+body { padding-bottom: 96px; }
+.lb-page { max-width: 1040px; margin: 0 auto; padding: 20px 16px 0; }
+.lb-head h1 { font: 700 30px/1 var(--font-display); margin: 0 0 6px; }
+.lb-head p { margin: 0 0 16px; color: var(--ink-2); font-size: 14.5px; max-width: 60ch; }
+.lb-panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-panel); padding: 14px; margin-bottom: 14px; }
+.lb-panel h2 { font: 700 17px/1 var(--font-display); margin: 0 0 10px; letter-spacing: .01em; }
+.lb-opts { display: grid; gap: 14px; grid-template-columns: 1fr; }
+@media (min-width: 720px) { .lb-opts { grid-template-columns: 1fr 1fr; } }
+.lb-opts .lab { display: block; font-size: 13.5px; font-weight: 600; color: var(--ink-2); margin-bottom: 6px; }
+.lb-opts .opts button { height: 40px; padding: 0 14px; border-radius: var(--r-ctl); border: 1px solid var(--line); background: var(--surface); color: var(--ink); font: 500 14px var(--font); cursor: pointer; }
+.lb-opts .opts button[aria-pressed=true] { background: var(--enamel); border-color: var(--enamel); color: #fff; }
+.lb-tools { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.lb-tools .input { flex: 1 1 180px; min-width: 0; }
+.lb-tools select.input { flex: 0 1 200px; }
+.lb-list { display: grid; gap: 0; border: 1px solid var(--line); border-radius: var(--r-ctl); overflow: hidden; max-height: 340px; overflow-y: auto; }
+.lb-item { display: flex; gap: 12px; align-items: center; padding: 10px 12px; border-bottom: 1px solid var(--line-2); cursor: pointer; background: var(--surface); }
+.lb-item:last-child { border-bottom: 0; }
+.lb-item input { width: 20px; height: 20px; accent-color: var(--enamel); flex: none; }
+.lb-item .id { font: 500 13px var(--font-mono); color: var(--ink-2); flex: none; min-width: 96px; }
+.lb-item .nm { font-weight: 600; font-size: 14.5px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lb-item .vt { color: var(--ink-3); font-size: 13px; margin-left: auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 40%; }
+@media (max-width: 560px) { .lb-item { flex-wrap: wrap; } .lb-item .vt { margin-left: 32px; max-width: 100%; flex-basis: 100%; } }
+.lb-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: var(--surface); border-top: 1px solid var(--line); padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); display: flex; gap: 12px; align-items: center; justify-content: center; }
+.lb-bar .cnt { font-size: 14px; color: var(--ink-2); }
+.lb-bar .btn { min-width: 160px; }
+.lb-preview-title { max-width: 1040px; margin: 8px auto 10px; padding: 0 16px; font: 700 17px/1 var(--font-display); }
+
+/* ---- Sheet tem ---- */
+.sheet-wrap { max-width: 1040px; margin: 0 auto 24px; padding: 0 16px; }
+.paper { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 10mm; display: flex; flex-wrap: wrap; gap: 0; align-content: flex-start; }
+.lbl { position: relative; box-sizing: border-box; background: #F7C531; color: #2B2200; border: .3mm dashed #2B220055; display: flex; align-items: center; gap: 2.4mm; overflow: hidden; page-break-inside: avoid; break-inside: avoid; }
+.lbl .qr { flex: none; background: #fff; border-radius: 1.2mm; padding: 1.2mm; display: grid; place-items: center; }
+.lbl .qr svg { display: block; width: 100%; height: 100%; }
+.lbl .tx { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; justify-content: center; height: 100%; }
+.lbl .bd { font: 700 1em/1 'Barlow Condensed', sans-serif; letter-spacing: .02em; opacity: .8; text-transform: none; }
+.lbl .tid { font: 500 .95em/1.1 'IBM Plex Mono', monospace; margin: .25em 0 .2em; white-space: nowrap; }
+.lbl .tn { font: 700 1.05em/1.1 'Barlow Condensed', sans-serif; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.lbl .tv { overflow-wrap: anywhere; font: 400 .72em/1.2 'IBM Plex Sans', sans-serif; margin-top: .3em; opacity: .85; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.lbl .bolt { position: absolute; top: 50%; width: 2.2mm; height: 2.2mm; margin-top: -1.1mm; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #fff9, #2B220044 70%); box-shadow: inset 0 0 0 .2mm #2B220055; }
+.lbl .bolt.l { left: 1.6mm; } .lbl .bolt.r { right: 1.6mm; }
+.lbl.no-bolt .bolt { display: none; }
+/* Kích thước */
+.s-s .lbl { width: 50mm; height: 30mm; padding: 2mm 4.5mm; font-size: 3.1mm; } .s-s .qr { width: 18mm; height: 18mm; }
+.s-m .lbl { width: 70mm; height: 40mm; padding: 3mm 6.5mm; font-size: 3.8mm; } .s-m .qr { width: 26mm; height: 26mm; }
+.s-l .lbl { width: 95mm; height: 55mm; padding: 4mm 8mm; font-size: 5mm; } .s-l .qr { width: 40mm; height: 40mm; }
+.s-a .lbl { width: 190mm; height: 120mm; padding: 8mm 14mm; flex-direction: column; justify-content: center; text-align: center; font-size: 8mm; gap: 5mm; }
+.s-a .qr { width: 78mm; height: 78mm; } .s-a .tx { height: auto; align-items: center; } .s-a .bolt { top: 8mm; margin-top: 0; width: 4mm; height: 4mm; }
+.s-a .lbl .tv, .s-a .lbl .tn { -webkit-line-clamp: 3; }
+.empty { padding: 28px; text-align: center; color: var(--ink-3); }
+@page { size: A4; margin: 8mm; }
+@media print {
+  html, body { background: #fff !important; }
+  body { padding: 0 !important; }
+  .lb-page, .lb-bar, .lb-preview-title, .topbar { display: none !important; }
+  .sheet-wrap { max-width: none; margin: 0; padding: 0; }
+  .paper { border: 0; border-radius: 0; padding: 0; }
+  .lbl { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+</style>
+</head>
+<body>
+<header class="topbar" id="topbar"></header>
+<div class="lb-page" id="ui"><div class="skeleton" style="height:160px"></div></div>
+<div class="lb-preview-title" id="pv-title" hidden>Xem trước khi in</div>
+<div class="sheet-wrap"><div class="paper s-m" id="paper"></div></div>
+<div class="lb-bar" id="bar" hidden><span class="cnt" id="cnt"></span><button class="btn signal" id="print" type="button"></button></div>
+<div class="toast-root" id="toast-root" aria-live="polite"></div>
+<script>
+(function () {
+  'use strict';
+  var Q = window.QL, esc = Q.esc, icon = Q.icon, toast = Q.toast;
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var D = null, sel = {}, size = 's-m', copies = 1, bolts = true, showLoc = true;
+  var preId = decodeURIComponent((location.hash || '').replace(/^#/, ''));
+
+  function baseUrl() { return location.href.replace(/labels\.html.*$/, 'index.html'); }
+  function tagUrl(id) { return baseUrl() + '?a=' + encodeURIComponent(id); }
+  function qrSvg(text) {
+    var q = qrcode(0, 'M'); q.addData(text); q.make();
+    return q.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
+  }
+
+  function topbar() {
+    var u = Q.Auth.user;
+    $('#topbar').innerHTML = '<a href="index.html" class="brand" style="display:flex;align-items:center;gap:10px;color:inherit;text-decoration:none"><span style="font:700 20px var(--font-display)">' + esc((D && D.tenNgan) || 'Quản lý tài sản') + '</span></a><span class="grow"></span>' +
+      '<a href="index.html" class="btn-login" style="text-decoration:none">Về ứng dụng</a>';
+  }
+
+  function chosen() { return D.assets.filter(function (a) { return sel[a.id]; }); }
+  function renderPaper() {
+    var list = chosen(), paper = $('#paper');
+    paper.className = 'paper ' + size;
+    var out = '';
+    list.forEach(function (a) {
+      for (var i = 0; i < copies; i++) {
+        out += '<div class="lbl' + (bolts ? '' : ' no-bolt') + '"><span class="bolt l"></span><span class="bolt r"></span>' +
+          '<div class="qr">' + qrSvg(tagUrl(a.id)) + '</div>' +
+          '<div class="tx"><div class="bd">' + esc(D.tenNgan || D.ten || '') + '</div><div class="tid">' + esc(a.id) + '</div><div class="tn">' + esc(a.ten) + '</div>' +
+          (showLoc && a.viTri ? '<div class="tv">' + esc(a.viTri) + '</div>' : '') + '</div></div>';
+      }
+    });
+    paper.innerHTML = out || '<div class="empty" style="width:100%">Chưa chọn thiết bị nào. Hãy tích chọn ở danh sách phía trên.</div>';
+    var n = list.length * copies;
+    $('#cnt').textContent = list.length + ' thiết bị, ' + n + ' tem';
+    $('#print').innerHTML = icon('printer', 'sm') + 'In ' + n + ' tem';
+    $('#print').disabled = !n;
+    $('#pv-title').hidden = !list.length; $('#bar').hidden = false;
+  }
+
+  function seg(id, items, cur) {
+    return '<div class="opts" id="' + id + '">' + items.map(function (i) { return '<button type="button" data-v="' + i[0] + '" aria-pressed="' + (String(cur) === String(i[0])) + '">' + i[1] + '</button>'; }).join('') + '</div>';
+  }
+
+  function renderList() {
+    var q = Q.norm($('#lq').value), g = $('#lg').value;
+    var rows = D.assets.filter(function (a) { return (!g || a.nhom === g) && (!q || Q.norm(a.id + ' ' + a.ten + ' ' + (a.viTri || '')).indexOf(q) >= 0); });
+    $('#llist').innerHTML = rows.length ? rows.map(function (a) {
+      return '<label class="lb-item"><input type="checkbox" data-id="' + esc(a.id) + '"' + (sel[a.id] ? ' checked' : '') + '><span class="id">' + esc(a.id) + '</span><span class="nm">' + esc(a.ten) + '</span><span class="vt">' + esc(a.viTri || '') + '</span></label>';
+    }).join('') : '<div class="empty">Không có thiết bị phù hợp.</div>';
+    return rows;
+  }
+
+  function build() {
+    var ui = $('#ui');
+    ui.innerHTML = '<div class="lb-head"><h1>In tem QR</h1><p>Chọn thiết bị, chọn cỡ tem rồi in ra giấy decal (hoặc giấy thường rồi dán băng keo trong). Quét tem bằng điện thoại sẽ mở thẳng hồ sơ thiết bị.</p></div>' +
+      '<div class="lb-panel"><h2>Tùy chọn tem</h2><div class="lb-opts">' +
+      '<div><span class="lab">Cỡ tem</span>' + seg('o-size', [['s-s', 'Nhỏ 50×30 mm'], ['s-m', 'Vừa 70×40 mm'], ['s-l', 'Lớn 95×55 mm'], ['s-a', 'Cả trang A4']], size) + '</div>' +
+      '<div><span class="lab">Số tem mỗi thiết bị</span>' + seg('o-copies', [[1, '1'], [2, '2'], [4, '4']], copies) + '</div>' +
+      '<div><span class="lab">Vị trí trên tem</span>' + seg('o-loc', [['1', 'Hiện vị trí'], ['0', 'Ẩn vị trí']], showLoc ? 1 : 0) + '</div>' +
+      '<div><span class="lab">Lỗ vít trang trí</span>' + seg('o-bolt', [['1', 'Có'], ['0', 'Không']], bolts ? 1 : 0) + '</div>' +
+      '</div></div>' +
+      '<div class="lb-panel"><h2>Chọn thiết bị</h2><div class="lb-tools"><input class="input" id="lq" type="search" placeholder="Tìm theo tên hoặc mã" autocomplete="off"><select class="input" id="lg"><option value="">Tất cả nhóm</option>' +
+      D.groups.map(function (g) { return '<option value="' + esc(g.ma) + '">' + esc(g.ten) + '</option>'; }).join('') + '</select>' +
+      '<button class="btn ghost" id="lall" type="button">Chọn tất cả</button><button class="btn ghost" id="lnone" type="button">Bỏ chọn</button></div><div class="lb-list" id="llist"></div></div>';
+    renderList(); renderPaper();
+    var segClick = function (id, fn) { $(id).addEventListener('click', function (e) { var b = e.target.closest('button'); if (!b) return; [].forEach.call($(id).children, function (c) { c.setAttribute('aria-pressed', c === b); }); fn(b.getAttribute('data-v')); renderPaper(); }); };
+    segClick('#o-size', function (v) { size = v; });
+    segClick('#o-copies', function (v) { copies = +v; });
+    segClick('#o-loc', function (v) { showLoc = v === '1'; });
+    segClick('#o-bolt', function (v) { bolts = v === '1'; });
+    $('#lq').addEventListener('input', Q.debounce(renderList, 150));
+    $('#lg').addEventListener('change', renderList);
+    $('#llist').addEventListener('change', function (e) { var id = e.target.getAttribute('data-id'); if (id) { sel[id] = e.target.checked; renderPaper(); } });
+    $('#lall').addEventListener('click', function () { renderList().forEach(function (a) { sel[a.id] = true; }); renderList(); renderPaper(); });
+    $('#lnone').addEventListener('click', function () { sel = {}; renderList(); renderPaper(); });
+    $('#print').addEventListener('click', function () { window.print(); });
+  }
+
+  function login() {
+    $('#ui').innerHTML = '<div class="lb-panel" style="text-align:center;padding:28px"><h2 style="font-size:22px">Cần đăng nhập</h2><p style="color:var(--ink-2);margin:0 0 16px">Chỉ Ban Quản Trị và kỹ thuật được in tem QR.</p><a class="btn" href="index.html#/login?next=labels">Đăng nhập bằng mã PIN</a></div>';
+  }
+
+  function boot() {
+    topbar();
+    if (!Q.Auth.can(['BQT', 'KY_THUAT'])) return login();
+    Q.api('labels').then(function (d) {
+      D = d; topbar();
+      if (preId && d.assets.some(function (a) { return a.id === preId; })) sel[preId] = true;
+      build();
+    }).catch(function (e) {
+      if (e && e.code === 'AUTH') return login();
+      $('#ui').innerHTML = '<div class="lb-panel" style="text-align:center;padding:28px"><h2>Không tải được dữ liệu</h2><p style="color:var(--ink-2)">' + esc(e.message || '') + '</p><button class="btn" onclick="location.reload()">Thử lại</button></div>';
+    });
+  }
+  Q.onAuthLost = login;
+  boot();
+})();
+</script>
+</body>
+</html>
