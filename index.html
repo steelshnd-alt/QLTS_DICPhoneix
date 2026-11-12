@@ -14,6 +14,7 @@
 <link rel="stylesheet" href="assets/app.css">
 <script src="config.js"></script>
 <script src="assets/common.js"></script>
+<script>if(!window.QL){document.addEventListener('DOMContentLoaded',function(){document.body.innerHTML='<div style="font:16px/1.6 Arial,sans-serif;max-width:560px;margin:10vh auto;padding:0 20px;color:#0F2F3A"><h2 style="margin:0 0 12px">Chưa tải được giao diện</h2><p>Trên GitHub đang <b>thiếu thư mục assets</b> (hoặc file assets/common.js). Hãy tải lên đủ các mục: <b>index.html, labels.html, config.js, manifest.webmanifest</b> và hai thư mục <b>assets</b>, <b>lib</b>. Xong thì chờ 1 đến 2 phút rồi tải lại trang (Ctrl+F5).</p></div>';});}</script>
 </head>
 <body>
 <header class="topbar" id="topbar"></header>
@@ -734,14 +735,29 @@
     var sp = new URLSearchParams(location.search), a = sp.get('a');
     if (a) history.replaceState(null, '', location.pathname + '#/a/' + encodeURIComponent(a));
     Q.onAuthLost = function () { renderShell(); markTab(S.curTab); toast('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.', 'err'); go('/login'); };
+    var CK = 'qlts_cfg_v1';
+    function readCfg() { try { var c = JSON.parse(localStorage.getItem(CK) || 'null'); return c && typeof c === 'object' ? c : null; } catch (e) { return null; } }
+    function saveCfg(c) { try { localStorage.setItem(CK, JSON.stringify(c)); } catch (e) { } }
+    function showError(e) {
+      renderShell();
+      view.innerHTML = '<div class="page" style="padding-top:20px">' + emptyBox('alert', e.code === 'CFG' ? 'Chưa cấu hình ứng dụng' : 'Không kết nối được', e.message || '') + '<div style="text-align:center;margin-top:14px"><button class="btn" id="retry">Thử lại</button></div></div>';
+      var rt = $('#retry'); if (rt) rt.onclick = start;
+    }
     function start() {
+      var cached = readCfg(), started = false;
+      function launch(cfg) {
+        S.cfg = cfg; renderShell();
+        if (!started) { started = true; window.addEventListener('hashchange', render); }
+        render();
+      }
+      // Có cấu hình đã lưu: vào app ngay, cập nhật cấu hình ngầm (mở app chỉ còn 1 lần gọi máy chủ).
+      if (cached) launch(cached);
       api('config').then(function (cfg) {
-        S.cfg = cfg; renderShell(); window.addEventListener('hashchange', render); render();
-      }).catch(function (e) {
-        renderShell();
-        view.innerHTML = '<div class="page" style="padding-top:20px">' + emptyBox('alert', e.code === 'CFG' ? 'Chưa cấu hình ứng dụng' : 'Không kết nối được hệ thống', e.message, e.code === 'CFG' ? '' : '<button class="btn" id="retry">' + icon('refresh', 'sm') + 'Thử lại</button>') + '</div>';
-        var rt = $('#retry'); if (rt) rt.onclick = start;
-      });
+        var changed = JSON.stringify(cfg) !== JSON.stringify(cached);
+        saveCfg(cfg);
+        if (!cached) launch(cfg);
+        else if (changed) { S.cfg = cfg; renderShell(); markTab(S.curTab); }
+      }).catch(function (e) { if (!cached) showError(e); });
     }
     start();
   }
